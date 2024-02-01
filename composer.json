@@ -2,7 +2,6 @@
     "name": "ampeco/fast-sqlite-refresh-database",
     "type": "module",
     "description": "Alternative to migrations for each test",
-    "version": "1.0.0",
     "keywords": [
     ],
     "license": "MIT",
