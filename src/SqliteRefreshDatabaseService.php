@@ -11,7 +11,7 @@ class SqliteRefreshDatabaseService
     {
     }
 
-    protected function getTemplatePath(string $databasePath, string $name)
+    protected function getTemplatePath(string $databasePath, string $name): ?string
     {
 
         if ($databasePath === ':memory:') {
@@ -21,13 +21,17 @@ class SqliteRefreshDatabaseService
         return dirname($databasePath) . '/' . $name . '.template.sqlite';
     }
 
-    protected function getDatabasePath(string $name){
+    protected function getDatabasePath(string $name): ?string
+    {
         return config('database.connections.' . $name . '.database');
     }
 
-    public function refreshDatabase(string $name)
+    public function refreshDatabase(string $name): void
     {
         $databasePath = $this->getDatabasePath($name);
+        if ($databasePath === null) {
+            return;
+        }
         $templatePath = $this->getTemplatePath($databasePath, $name);
         if ($templatePath === null) {
             return;
@@ -46,7 +50,7 @@ class SqliteRefreshDatabaseService
         }
     }
 
-    private function restoreTemplate(string $databaseFile, string $templateFile, string $name)
+    private function restoreTemplate(string $databaseFile, string $templateFile, string $name): void
     {
         DB::disconnect($name);
 
@@ -56,18 +60,15 @@ class SqliteRefreshDatabaseService
         copy($templateFile, $databaseFile);
     }
 
-    private function migrate(string $name)
+    private function migrate(string $name): void
     {
         Artisan::call('migrate', [
             '--database' => $name,
         ]);
     }
 
-    private function shouldSaveTemplate(string $databaseFile, string $templateFile)
+    private function shouldSaveTemplate(string $databaseFile, string $templateFile): bool
     {
-        if ($templateFile === null) {
-            return false;
-        }
         if (!file_exists($templateFile)) {
             return true;
         }
@@ -77,13 +78,13 @@ class SqliteRefreshDatabaseService
         return $templateHash !== $databaseHash;
     }
 
-    private function saveTemplate(string $name, string $databaseFile, string $templatePath)
+    private function saveTemplate(string $name, string $databaseFile, string $templatePath): void
     {
         DB::disconnect($name);
         copy($databaseFile, $templatePath);
     }
 
-    private function shouldRestoreTemplate(string $databaseFile, $templateFile)
+    private function shouldRestoreTemplate(string $databaseFile, $templateFile): bool
     {
         if (!file_exists($templateFile)) {
             return false;
