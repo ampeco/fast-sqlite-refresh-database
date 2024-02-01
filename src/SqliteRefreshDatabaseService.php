@@ -11,24 +11,28 @@ class SqliteRefreshDatabaseService
     {
     }
 
-    protected function getTemplatePath(string $name)
+    protected function getTemplatePath(string $databasePath, string $name)
     {
-        $databaseFile = config('database.connections.' . $name . '.database');
-        if ($databaseFile === ':memory:') {
+
+        if ($databasePath === ':memory:') {
             return null;
         }
 
-        return dirname($databaseFile) . '/' . $name . '.template.sqlite';
+        return dirname($databasePath) . '/' . $name . '.template.sqlite';
+    }
+
+    protected function getDatabasePath(string $name){
+        return config('database.connections.' . $name . '.database');
     }
 
     public function refreshDatabase(string $name)
     {
-        $templatePath = $this->getTemplatePath($name);
+        $databasePath = $this->getDatabasePath($name);
+        $templatePath = $this->getTemplatePath($databasePath, $name);
         if ($templatePath === null) {
             return;
         }
-        $databasePath = config('database.connections.' . $name . '.database');
-        if (file_exists($templatePath) && $this->shouldRestoreTemplate($databasePath, $templatePath)) {
+        if ($this->shouldRestoreTemplate($databasePath, $templatePath)) {
             $this->restoreTemplate($databasePath, $templatePath, $name);
         }
 
