@@ -2,7 +2,7 @@
 
 namespace Ampeco\Modules\FastSqliteRefreshDatabase;
 
-use App\Console\Kernel;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 class SqliteRefreshDatabaseService
@@ -54,16 +54,13 @@ class SqliteRefreshDatabaseService
             unlink($databaseFile);
         }
         copy($templateFile, $databaseFile);
-
-        $this->app[Kernel::class]->setArtisan(null);
     }
 
     private function migrate(string $name)
     {
-        $this->app[Kernel::class]->call('migrate', [
+        Artisan::call('migrate', [
             '--database' => $name,
         ]);
-        $this->app[Kernel::class]->setArtisan(null);
     }
 
     private function shouldSaveTemplate(string $databaseFile, string $templateFile)
@@ -88,6 +85,9 @@ class SqliteRefreshDatabaseService
 
     private function shouldRestoreTemplate(string $databaseFile, $templateFile)
     {
+        if (!file_exists($templateFile)) {
+            return false;
+        }
         if (!file_exists($databaseFile)) {
             return true;
         }
