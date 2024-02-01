@@ -7,9 +7,13 @@ In this implementation no transactions are used when starting a test and the dat
 
 # Instructions
 
-1. Make sure you are not using in-memory database, but a sqlite file based one for your test setup
-2. In your test instead of `use RefreshDatabase;` use `use FastSqliteRefreshDatabase;`
-3. Run your tests
+1. Install the package
+```
+composer require --dev ampeco/fast-sqlite-refresh-database
+```
+2. Make sure you are not using in-memory database, but a sqlite file based one for your test setup
+3. In your test instead of `use RefreshDatabase;` use `use FastSqliteRefreshDatabase;`
+4. Run your tests
 
 # Performance
 
@@ -31,4 +35,22 @@ ParaTest v6.9.1 upon PHPUnit 9.6.7 by Sebastian Bergmann and contributors.
 .....................                                             86 / 86 (100%)
 
 Time: 00:06.894, Memory: 39.12 MB
+```
+
+## Additional speed improvement
+If you are running a lot of test in CI for example. You can call `php artisan fast-sqlite-refresh-database:preheat` before running your tests. This will create a clean sqlite database file that can be copied for each test. This will speed up your tests even more!
+
+In order to tell your tests to use the preheated database, you can set the environment variable `FAST_SQLITE_REFRESH_DATABASE_PREHEATED` to `true` before running your tests.
+```
+FAST_SQLITE_REFRESH_DATABASE_PREHEATED=true php vendor/bin/paratest
+```
+
+Here is the same test with preheated database:
+```
+ParaTest v6.9.1 upon PHPUnit 9.6.7 by Sebastian Bergmann and contributors.
+
+................................................................. 65 / 86 ( 75%)
+.....................                                             86 / 86 (100%)
+
+Time: 00:05.916, Memory: 39.12 MB
 ```

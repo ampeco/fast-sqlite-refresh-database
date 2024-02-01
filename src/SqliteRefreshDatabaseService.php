@@ -32,7 +32,7 @@ class SqliteRefreshDatabaseService
             $this->restoreTemplate($databasePath, $templatePath, $name);
         }
 
-        if (env('PREHEATED', false)) {
+        if (env('FAST_SQLITE_REFRESH_DATABASE_PREHEATED', false)) {
             return;
         }
         $this->migrate($name);
@@ -62,7 +62,7 @@ class SqliteRefreshDatabaseService
         $this->app[Kernel::class]->setArtisan(null);
     }
 
-    private function shouldSaveTemplate(string $databaseFile, $templateFile)
+    private function shouldSaveTemplate(string $databaseFile, string $templateFile)
     {
         if ($templateFile === null) {
             return false;
