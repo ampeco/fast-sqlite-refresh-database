@@ -13,7 +13,6 @@ class SqliteRefreshDatabaseService
 
     protected function getTemplatePath(string $databasePath, string $name): ?string
     {
-
         if ($databasePath === ':memory:') {
             return null;
         }
@@ -28,6 +27,8 @@ class SqliteRefreshDatabaseService
 
     public function refreshDatabase(string $name): void
     {
+        \Log::debug('[FAST] Refreshing database');
+
         $databasePath = $this->getDatabasePath($name);
         if ($databasePath === null) {
             return;
@@ -54,10 +55,9 @@ class SqliteRefreshDatabaseService
     {
         DB::disconnect($name);
 
-        if (file_exists($databaseFile)) {
-            unlink($databaseFile);
+        if (!copy($templateFile, $databaseFile)) {
+            \Log::error('[FAST] Unable to restore template');
         }
-        copy($templateFile, $databaseFile);
     }
 
     private function migrate(string $name): void
@@ -72,10 +72,15 @@ class SqliteRefreshDatabaseService
         if (!file_exists($templateFile)) {
             return true;
         }
-        $templateHash = md5_file($templateFile);
-        $databaseHash = md5_file($databaseFile);
 
-        return $templateHash !== $databaseHash;
+        if (filesize($templateFile) !== filesize($databaseFile)) {
+            return true;
+        }
+
+        $templateVersion = $this->getDatabaseChangeCounter($templateFile);
+        $databaseVersion = $this->getDatabaseChangeCounter($databaseFile);
+
+        return $templateVersion !== $databaseVersion;
     }
 
     private function saveTemplate(string $name, string $databaseFile, string $templatePath): void
@@ -84,17 +89,50 @@ class SqliteRefreshDatabaseService
         copy($databaseFile, $templatePath);
     }
 
-    private function shouldRestoreTemplate(string $databaseFile, $templateFile): bool
+    private function shouldRestoreTemplate(string $databasePath, string $templatePath): bool
     {
-        if (!file_exists($templateFile)) {
+        // We should not restore from a template if the database file does not exist
+        if (!file_exists($templatePath)) {
             return false;
         }
-        if (!file_exists($databaseFile)) {
+
+        return $this->sqliteDatabaseDiffer($databasePath, $templatePath);
+    }
+
+    private function sqliteDatabaseDiffer(string $file1, string $file2): bool
+    {
+        if (!file_exists($file1) || !file_exists($file2)) {
             return true;
         }
-        $templateHash = md5_file($templateFile);
-        $databaseHash = md5_file($databaseFile);
+        if (filesize($file1) !== filesize($file2)) {
+            return true;
+        }
 
-        return $templateHash !== $databaseHash;
+        $counter1 = $this->getDatabaseChangeCounter($file1);
+
+        // Unable to read the sqlite database change counter
+        if ($counter1 === null) {
+            return true;
+        }
+
+        return $counter1 !== $this->getDatabaseChangeCounter($file2);
+    }
+
+    /**
+     * @param $file
+     * @return int|null the change counter or null if the file does not exist or unable to read the counter
+     */
+    private function getDatabaseChangeCounter($file): ?int
+    {
+        if (!file_exists($file)) {
+            return null;
+        }
+        $handle = fopen($file, 'rb');
+        fseek($handle, 24);
+        $data = fread($handle, 4);
+        $counter = unpack('V', $data)[1];  // interpret the data as little-endian unsigned long
+        fclose($handle);
+
+        return $counter ?? null;
     }
 }

@@ -24,8 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Ampeco\\Modules\\FastSqliteRefreshDatabase\\": "src/",
-            "Database\\Factories\\": "factories/"
+            "Ampeco\\Modules\\FastSqliteRefreshDatabase\\": "src/"
         }
     },
     "minimum-stability": "dev",

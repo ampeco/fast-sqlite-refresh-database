@@ -4,7 +4,7 @@ namespace Ampeco\Modules\FastSqliteRefreshDatabase;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -14,7 +14,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
     }
 
-    public function register()
+    public function register(): void
     {
     }
 }

@@ -38,6 +38,8 @@ Time: 00:06.894, Memory: 39.12 MB
 ```
 
 ## Additional speed improvement
+
+### Preheating the database
 If you are running a lot of test in CI for example. You can call `php artisan fast-sqlite-refresh-database:preheat` before running your tests. This will create a clean sqlite database file that can be copied for each test. This will speed up your tests even more!
 
 In order to tell your tests to use the preheated database, you can set the environment variable `FAST_SQLITE_REFRESH_DATABASE_PREHEATED` to `true` before running your tests.
@@ -54,3 +56,23 @@ ParaTest v6.9.1 upon PHPUnit 9.6.7 by Sebastian Bergmann and contributors.
 
 Time: 00:05.916, Memory: 39.12 MB
 ```
+
+### Ramdisk
+
+Running a large set of tests can create a lot of IO, for this reason you can use a ramdisk to store the sqlite database file.
+
+On macOS you could use APFS or HFS+ ramdisk. From our tests HFS+ appears to be faster by 3-4%.
+
+```bash
+# APFS
+diskutil apfs create $(hdiutil attach -nomount ram://1048576) ramdisk && touch /Volumes/ramdisk/.metadata_never_index &&  touch /Volumes/ramdisk/.fseventsd/no_log
+#HFS+
+diskutil erasevolume HFS+ ramdisk $(hdiutil attach -nomount ram://1048576) && touch /Volumes/ramdisk/.metadata_never_index &&  touch /Volumes/ramdisk/.fseventsd/no_log
+```
+
+To unmount the ramdisk:
+```bash
+diskutil eject /Volumes/ramdisk
+```
+
+On linux you can use `tmpfs`
